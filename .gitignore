@@ -129,4 +129,4 @@ dmypy.json
 .pyre/
 *.out
 examples/swmm_and_python/data/model_full_features.rpt
-examples/tmp/Untitled.ipynb
+examples/tmp/
