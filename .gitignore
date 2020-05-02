@@ -130,3 +130,5 @@ dmypy.json
 *.out
 examples/swmm_and_python/data/model_full_features.rpt
 examples/tmp/
+examples/sensitivity_analysis/data/out
+
