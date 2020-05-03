@@ -132,3 +132,4 @@ examples/swmm_and_python/data/model_full_features.rpt
 examples/tmp/
 examples/sensitivity_analysis/data/out
 
+bugs/data/swmm.toolkit.bug.rpt

@@ -1,82 +1,11 @@
 
-  EPA STORM WATER MANAGEMENT MODEL - VERSION 5.1 (Build 5.3.0.dev0)
+  EPA STORM WATER MANAGEMENT MODEL - VERSION 5.1 (Build 5.2.0.dev3)
   --------------------------------------------------------------
 
   
-  **********************           Volume        Volume
-  Rainfall Dependent I/I        acre-feet      10^6 gal
-  **********************        ---------     ---------
-  Sewershed Rainfall ......         0.083         0.027
-  RDII Produced ...........         0.042         0.014
-  RDII Ratio ..............         0.500
-  
-  
-  *********************************************************
-  NOTE: The summary statistics displayed in this report are
-  based on results found at every computational time step,  
-  not just on results from each reporting time step.
-  *********************************************************
-  
-  ****************
-  Analysis Options
-  ****************
-  Flow Units ............... CFS
-  Process Models:
-    Rainfall/Runoff ........ YES
-    RDII ................... YES
-    Snowmelt ............... NO
-    Groundwater ............ NO
-    Flow Routing ........... NO
-    Water Quality .......... NO
-  Infiltration Method ...... HORTON
-  Starting Date ............ 05/01/2020 00:00:00
-  Ending Date .............. 05/01/2020 06:00:00
-  Antecedent Dry Days ...... 0.0
-  Report Time Step ......... 00:10:00
-  Wet Time Step ............ 00:05:00
-  Dry Time Step ............ 01:00:00
-  
-  
-  **************************        Volume         Depth
-  Runoff Quantity Continuity     acre-feet        inches
-  **************************     ---------       -------
-  Total Precipitation ......         0.417         1.000
-  Evaporation Loss .........         0.000         0.000
-  Infiltration Loss ........         0.312         0.750
-  Surface Runoff ...........         0.101         0.243
-  Final Storage ............         0.004         0.009
-  Continuity Error (%) .....        -0.271
-  
-  
-  **************************        Volume        Volume
-  Flow Routing Continuity        acre-feet      10^6 gal
-  **************************     ---------     ---------
-  Dry Weather Inflow .......         0.000         0.000
-  Wet Weather Inflow .......         0.101         0.033
-  Groundwater Inflow .......         0.000         0.000
-  RDII Inflow ..............         0.042         0.014
-  External Inflow ..........         0.000         0.000
-  External Outflow .........         0.143         0.047
-  Flooding Loss ............         0.000         0.000
-  Evaporation Loss .........         0.000         0.000
-  Exfiltration Loss ........         0.000         0.000
-  Initial Stored Volume ....         0.000         0.000
-  Final Stored Volume ......         0.000         0.000
-  Continuity Error (%) .....         0.000
-  
-  
-  ***************************
-  Subcatchment Runoff Summary
-  ***************************
-  
-  ------------------------------------------------------------------------------------------------------------------------------
-                            Total      Total      Total      Total     Imperv       Perv      Total       Total     Peak  Runoff
-                           Precip      Runon       Evap      Infil     Runoff     Runoff     Runoff      Runoff   Runoff   Coeff
-  Subcatchment                 in         in         in         in         in         in         in    10^6 gal      CFS
-  ------------------------------------------------------------------------------------------------------------------------------
-  3                          1.00       0.00       0.00       0.75       0.24       0.00       0.24        0.03     1.27   0.243
-  
+  ERROR 205: invalid keyword RULE_STEP at line 27 of [OPTION] section:
+  RULE_STEP
 
-  Analysis begun on:  Sun May  3 09:40:19 2020
-  Analysis ended on:  Sun May  3 09:40:19 2020
+  Analysis begun on:  Sun May  3 09:43:06 2020
+  Analysis ended on:  Sun May  3 09:43:06 2020
   Total elapsed time: < 1 sec
