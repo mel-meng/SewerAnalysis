@@ -59,7 +59,7 @@ a                INTENSITY 1:00     1.0      TIMESERIES rg_a
 ;;Hydrograph     Rain Gage/Month  Response R        T        K        Dmax     Drecov   Dinit   
 ;;-------------- ---------------- -------- -------- -------- -------- -------- -------- --------
 RTK              a               
-RTK              All              Short    0.5      2        1        0.5      2        0       
+RTK              All              Short    0.5      2        1        0        0        0       
 RTK              All              Medium   0        2        2        0        0        0       
 RTK              All              Long     0        4        8        0        0        0       
 

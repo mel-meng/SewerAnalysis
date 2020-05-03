@@ -20,7 +20,7 @@ END_TIME             06:00:00
 SWEEP_START          01/01
 SWEEP_END            12/31
 DRY_DAYS             0
-REPORT_STEP          00:05:00
+REPORT_STEP          00:10:00
 WET_STEP             00:05:00
 DRY_STEP             01:00:00
 ROUTING_STEP         0:00:30 
@@ -75,7 +75,7 @@ a                INTENSITY {{ interval }}     1.0      TIMESERIES rg_a
 ;;Hydrograph     Rain Gage/Month  Response R        T        K        Dmax     Drecov   Dinit   
 ;;-------------- ---------------- -------- -------- -------- -------- -------- -------- --------
 RTK              a               
-RTK              All              Short    0.5      2        1        0.5      2        0       
+RTK              All              Short    0.5      2        1        0        0        0       
 RTK              All              Medium   0        2        2        0        0        0       
 RTK              All              Long     0        4        8        0        0        0       
 
