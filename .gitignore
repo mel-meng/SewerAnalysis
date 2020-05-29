@@ -133,3 +133,5 @@ examples/tmp/
 examples/sensitivity_analysis/data/out
 
 bugs/data/swmm.toolkit.bug.rpt
+examples/culvert/data/hds5_example_hot_start.rpt
+examples/culvert/data/hds5_example_hot_start.ini
