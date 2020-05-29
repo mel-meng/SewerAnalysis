@@ -49,7 +49,7 @@ DRY_ONLY         NO
 ;;Name           Elevation  MaxDepth   InitDepth  SurDepth   Aponded   
 ;;-------------- ---------- ---------- ---------- ---------- ----------
 54RCP_2          100        30         4.5        0          0         
-2                98         0          4.5        0          0         
+2                98         20         4.5        0          0         
 
 [OUTFALLS]
 ;;Name           Elevation  Type       Stage Data       Gated    Route To        

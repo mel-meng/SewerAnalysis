@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<DatFileXmlList xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <FileName>C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\examples\rational_method\data\rational_method.xml</FileName>
+  <CpuThreads>0</CpuThreads>
+  <Items>
+    <DatFile>
+      <FileName>C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\examples\rational_method\data\1D\rational_method\rational_method.dat</FileName>
+      <ScenarioName />
+      <StormName />
+      <EnginePath>C:\Program Files\Innovyze\xpswmm2019.1.3_x64\engine\swmmengw2D64.exe</EnginePath>
+      <EngineType>ENGINE_SP_64</EngineType>
+    </DatFile>
+    <DatFile>
+      <FileName>C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\examples\rational_method\data\1D\rational_method_Scenario_1\rational_method_Scenario_1.dat</FileName>
+      <ScenarioName />
+      <StormName />
+      <EnginePath>C:\Program Files\Innovyze\xpswmm2019.1.3_x64\engine\swmmengw2D64.exe</EnginePath>
+      <EngineType>ENGINE_SP_64</EngineType>
+    </DatFile>
+  </Items>
+</DatFileXmlList>
