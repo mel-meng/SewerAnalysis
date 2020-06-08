@@ -1,0 +1,98 @@
+Geom Title=inverted_with_contraction_expansion
+Program Version=5.07
+Viewing Rectangle=-0.8774 , 1.5922 , 0.8952 , 0.0299 
+
+River Reach=river           ,reach           
+Reach XY= 2 
+0.306016597510370.883817427385890.303941908713690.04149377593361
+Rch Text X Y=0.3054979,0.6732365
+Reverse River Text= 0 
+
+Type RM Length L Ch R = 1 ,38      ,10,10,10
+Node Last Edited Time=May/30/2020 22:51:06
+#Sta/Elev= 4 
+       0      73       1      63      10      63      11      73
+#Mann= 3 , 0 , 0 
+       0    .013       0       1    .013       0      10    .013       0
+Bank Sta=1,10
+XS Rating Curve= 0 ,0
+XS HTab Starting El and Incr=63.82,0.3, 31 
+XS HTab Horizontal Distribution= 5 , 5 , 5 
+Exp/Cntr=0.3,0.1
+
+Type RM Length L Ch R = 1 ,28      ,17,17,17
+Node Last Edited Time=Jun/01/2020 13:17:07
+#Sta/Elev= 4 
+       0      73       1      63      10      63      11      73
+#Mann= 3 , 0 , 0 
+       0    .013       0       1    .013       0      10    .013       0
+#XS Ineff= 2 , 0 
+       0    4.55            6.45       0        
+Permanent Ineff=
+       F       F
+Bank Sta=1,10
+XS Rating Curve= 0 ,0
+XS HTab Starting El and Incr=63.82,0.3, 31 
+XS HTab Horizontal Distribution= 5 , 5 , 5 
+Exp/Cntr=0.3,0.1
+
+Type RM Length L Ch R = 2 ,27      ,,,
+Node Last Edited Time=Jun/01/2020 11:22:17
+Bridge Culvert--1,0,-1,-1, 0 
+Deck Dist Width WeirC Skew NumUp NumDn MinLoCord MaxHiCord MaxSubmerge Is_Ogee
+1,15,1.4,0, 2, 2, , , 0.98, 0, 0,0,,
+       0      20
+      73      73
+      60      60
+       0      20
+      73      73
+      60      60
+BR Coef=-1 , 0 , 0 ,, 0 ,,,0.8,-1,,0,
+WSPro=,,,, 1 ,,,, 0 ,,,, 0 ,,,,-1 ,-1 ,-1 , 0 , 0 , 0 , 0 , 0 
+Culvert=1,0.9,,15,0.012,0.5,1,1,3,63,5.5,63.67,5.5,Culvert #1  , 0 ,1
+     5.5     5.5
+BC Culvert Barrel=1,1,0
+Culvert Bottom n=0.012
+BC Design=,, 0 ,, 0 ,,,,,,
+BC Use User HTab Curves=0
+BC User HTab FreeFlow(D)= 0 
+
+Type RM Length L Ch R = 1 ,10      ,10,10,10
+Node Last Edited Time=Jun/01/2020 13:18:00
+#Sta/Elev= 4 
+       0      73       1   63.37      10   63.37      11      73
+#Mann= 3 , 0 , 0 
+       0    .013       0       1    .013       0      10    .013       0
+#XS Ineff= 2 , 0 
+       0    4.72            6.28       0        
+Permanent Ineff=
+       F       F
+Bank Sta=1,10
+XS Rating Curve= 0 ,0
+XS HTab Starting El and Incr=63.52,0.3, 32 
+XS HTab Horizontal Distribution= 5 , 5 , 5 
+Exp/Cntr=0.3,0.1
+
+Type RM Length L Ch R = 1 ,0       ,10,10,10
+Node Last Edited Time=Jun/01/2020 11:20:05
+#Sta/Elev= 4 
+       0      73       1      62      10      62      11      73
+#Mann= 3 , 0 , 0 
+       0    .013       0       1    .013       0      10    .013       0
+Bank Sta=1,10
+XS Rating Curve= 0 ,0
+XS HTab Starting El and Incr=63.82,0.3, 31 
+XS HTab Horizontal Distribution= 5 , 5 , 5 
+Exp/Cntr=0.3,0.1
+
+LCMann Time=Dec/30/1899 00:00:00
+LCMann Region Time=Dec/30/1899 00:00:00
+LCMann Table=0
+Chan Stop Cuts=-1 
+
+
+
+Use User Specified Reach Order=0
+GIS Ratio Cuts To Invert=-1
+GIS Limit At Bridges=0
+Composite Channel Slope=5
