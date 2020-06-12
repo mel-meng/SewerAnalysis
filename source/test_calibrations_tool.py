@@ -151,3 +151,9 @@ class TestRun_scenarios(TestCase):
         a = os.path.join(self.workspace, 'sc/r3.inp')
         b = os.path.join(self.workspace, 'sc/r3_check.inp')
         assert(filecmp.cmp(a, b))
+    def test_plot_peformance_fn(self):
+        f = os.path.join(self.workspace, 'pfn_check.csv')
+        df_pfn = pd.read_csv(f)
+        fig = calibration_tools.plot_peformance_fn(df_pfn)
+        plt.show()
+        self.fail()
