@@ -63,6 +63,7 @@ def plot_events(df, events, fld):
 
     return fig
 
+
 def performance_fn(sim_df, sim_fld, obs_df, obs_fld, events):
     sim = event_obj_fn(sim_df, events, sim_fld)
     for fld in sim.keys():
@@ -75,9 +76,34 @@ def performance_fn(sim_df, sim_fld, obs_df, obs_fld, events):
         obs['obs_%s' % fld] = obs[fld]
         if fld != 'event':
             del obs[fld]
-
-
     return sim.set_index('event').join(obs.set_index('event'))
+
+
+def group_performance_fn(sim_df_list, sim_fld, obs_df, obs_fld, events, fn_list):
+    """
+    when calibrating a model, each parameter combination is a sim
+    this function will create the pfn for all the calibration tries.
+
+    :param sim_df_list:
+    :param sim_fld:
+    :param obs_df:
+    :param obs_fld:
+    :param events:
+    :param fn_list:
+    :return:
+    """
+    result = None
+    sim_fields = ['sim_%s' % x for x in fn_list]
+    for sim_name, sim_df in sim_df_list:
+        pfn = performance_fn(sim_df, sim_fld, obs_df, obs_fld, events)
+        if result is None:
+            result = pfn
+        result = result.join(pfn.loc[:, sim_fields], rsuffix=sim_name)
+
+    for fld in sim_fields:
+        del result[fld]
+    return result
+
 
 
 def plot_peformance_fn(df_pfn, fn_list=['max', 'max_hr', 'mean', 'min']):
