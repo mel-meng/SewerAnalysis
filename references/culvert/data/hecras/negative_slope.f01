@@ -1,0 +1,18 @@
+Flow Title=inverted
+Program Version=5.07
+Number of Profiles= 5 
+Profile Names=PF 1,PF 2,PF 3,PF 4,PF 5
+River Rch & RM=river,reach           ,38      
+      .1      .8     1.8     2.4       3
+Boundary for River Rch & Prof#=river,reach           , 1 
+Up Type= 0 
+Dn Type= 1 
+Dn Known WS=65
+DSS Import StartDate=
+DSS Import StartTime=
+DSS Import EndDate=
+DSS Import EndTime=
+DSS Import GetInterval= 0 
+DSS Import Interval=
+DSS Import GetPeak= 0 
+DSS Import FillOption= 0 
