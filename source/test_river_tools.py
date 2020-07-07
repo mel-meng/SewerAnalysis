@@ -3,9 +3,15 @@ import river_tools
 import pandas as pd
 import matplotlib.pyplot as plt
 import math
-import logging
 import os
 import matplotlib.animation as animation
+import logging
+import seaborn as sns
+
+
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+    datefmt='%Y-%m-%d:%H:%M:%S',
+    level=logging.DEBUG)
 
 class TestRiverTools(TestCase):
     def setUp(self) -> None:
@@ -70,13 +76,45 @@ class TestRiverTools(TestCase):
     def test_cross_section_plot_animation(self):
         f = self.f
         out_folder = './test/river/tmp'
-        df = pd.read_excel(f, 'Sheet1')
+        df = pd.read_excel(f, 'Sheet2')
         xs = river_tools.CrossSection(df=df, sta_fld='station', z_fld='z', n_fld='roughness', panel_fld='pannel')
+        i = 1
         for level in sorted(xs.z):
             xs.set_level(level)
             fig = xs.plot(level)
-            fig.savefig(os.path.join(out_folder, '%s.jpg' % level))
+            fig.savefig(os.path.join(out_folder, '%04d.jpg' % i))
+            i += 1
         self.fail()
+
+    def test_read_icm_csv(self):
+        csv_path = './test/river/icm/icm_cross_section_survey_section_array.csv'
+        output_folder = './test/river/icm/tmp'
+        xs_list = river_tools.read_icm_cross_section_survey_section_array_csv(csv_path)
+        xs_list = river_tools.icm_xs_add_offset(xs_list)
+        for k in xs_list:
+            out_csv = os.path.join(output_folder, '%s.csv' % str(k).replace('.', '_'))
+            xs_list[k].to_csv(out_csv, index_label='no')
+            fig = river_tools.plot_xs(xs_list[k], k)
+            # fig = plt.figure()
+            # df = xs_list[k]
+            # plt.plot(df['offset'], df['Z'])
+            # plt.title(k)
+            out_png = os.path.join(output_folder, '%s.png' % str(k).replace('.', '_'))
+            fig.savefig(out_png)
+
+        self.fail()
+
+    def test_plot_xs(self):
+        csv_path = './test/river/icm/xs.csv'
+        output_folder = './test/river/icm/tmp'
+        df = pd.read_csv(csv_path)
+        xs_name = 'BalzerC_Reach1_4_000'
+        fig = river_tools.plot_xs(df, xs_name)
+        out_png = os.path.join(output_folder, '%s.png' % 'test')
+        fig.savefig(out_png)
+        self.fail()
+
+
 
 
 

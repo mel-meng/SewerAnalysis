@@ -2,6 +2,85 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import os
+import csv
+import logging
+import seaborn as sns
+
+logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+                    datefmt='%Y-%m-%d:%H:%M:%S',
+                    level=logging.DEBUG)
+
+
+def read_icm_cross_section_survey_section_array_csv(csv_path):
+    """
+    read the ICM csv export for cross section in the following format
+ObjectTable	id	X	Y	Z	roughness_N	new_panel
+FieldDescription	ID	X coordinate	Y coordinate	Bed level	Roughness Manning's n	New panel
+UserUnits		m	m	m AD
+hw_cross_section_survey_section_array	1093.1	546618.976	4804330.849	291.4439087	0.013
+		546628.1402	4804327.693	291.1368103	0.013
+
+    :param csv_path:
+    :return: a dataframe
+    """
+    xs_name = None
+    xs_list = {}
+    rows = []
+    with open(csv_path) as o:
+        i = 0
+        for l in csv.reader(o):
+            if i == 0:
+                header = l
+            if i == 2:
+                units = l
+            if i >= 3:
+                if len(l[1]) > 0:
+                    if xs_name is None:
+                        # first cross section
+                        xs_name = l[1]
+                        logging.debug('first xs: %s' % xs_name)
+                    else:  # start of another xs
+                        xs_list[xs_name] = pd.DataFrame(rows)
+                        logging.debug('xs saved: %s' % xs_name)
+                        rows = []
+                        xs_name = l[1]
+                        logging.debug('next xs: %s' % xs_name)
+                rows.append(dict(zip(header, l)))
+            i += 1
+        # add the last one
+        xs_list[xs_name] = pd.DataFrame(rows)
+        logging.debug('xs saved: %s' % xs_name)
+    return xs_list
+
+
+def icm_xs_add_offset(xs_list):
+
+    for xs in xs_list.copy():
+        df = xs_list[xs]
+        for fld in df.columns:
+            if fld in ['X', 'Y', 'Z', 'roughness_N', 'new_panel']:
+                df[fld] = pd.to_numeric(df[fld], errors='roughness_N')
+        df['length'] = df.loc[:, ['X', 'Y']].diff().apply(lambda x: np.sqrt(x['X']**2 + x['Y']**2), axis=1).fillna(0)
+        df['offset'] = df['length'].cumsum()
+        xs_list[xs] = df
+    return xs_list
+
+
+def plot_xs(df, xs_name):
+    sns.set()
+    fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
+    # sns.lineplot(x='offset', y='Z', data=df, ax=axes[1])
+    axes[1].plot(df['offset'], df['Z'])
+    axes[1].set_ylabel('Bed Elevation')
+    axes[1].set_xlabel('Offset')
+    zmax = max(df['Z'])
+    zmin = min(df['Z'])
+    for x in df.loc[df['new_panel'] == 1, 'offset'].values:
+        axes[1].plot([x, x], [zmin, zmax], linestyle='--', color='grey')
+    axes[0].plot(df['offset'], df['roughness_N'])
+    axes[0].set_ylabel('Roughness')
+    fig.suptitle(xs_name)
+    return fig
 
 
 class CrossSection:
@@ -37,7 +116,7 @@ class CrossSection:
         plt.plot(x, y, marker='o', linestyle='dashed', color='blue', markersize=2)
 
         # water surface
-        plt.plot([min(x), max(x)], [level, level],  marker='o', linestyle='dashed', color='blue')
+        plt.plot([min(x), max(x)], [level, level], marker='o', linestyle='dashed', color='blue')
         plt.title('level = %s, area=%.2f, wp=%.2f' % (level, self.area, self.wp))
         return fig
 
@@ -89,7 +168,6 @@ def line_intersection(line1, line2):
     return x, y
 
 
-
 def cross_section_level(xs, ys, level):
     """
     given water level, area, wetted perimeter of the cross section
@@ -118,7 +196,7 @@ def cross_section_level(xs, ys, level):
         pass
     else:
         for i in range(len(x)):
-            if i == 0: # first point
+            if i == 0:  # first point
                 pass
             else:
                 x0 = x[i - 1]
@@ -129,12 +207,12 @@ def cross_section_level(xs, ys, level):
                     # add point 0
                     line.append([x0, y0])
                 elif level == y1:
-                    #add point 1
+                    # add point 1
                     line.append([x1, y1])
 
                 elif level < min(y1, y0):
                     pass
-                elif (level > y0 and level < y1):#or (level > y1 and level < y0):
+                elif (level > y0 and level < y1):  # or (level > y1 and level < y0):
                     line.append([x0, y0])
                     line.append(line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]]))
                 elif (level > y1 and level < y0):
@@ -145,5 +223,3 @@ def cross_section_level(xs, ys, level):
                     line.append([x1, y1])
 
     return line
-
-
