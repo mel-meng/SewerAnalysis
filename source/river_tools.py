@@ -67,6 +67,8 @@ def icm_xs_add_offset(xs_list):
 
 
 def plot_xs(df, xs_name):
+
+    # TODO: add flood level alex
     sns.set()
     fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
     # sns.lineplot(x='offset', y='Z', data=df, ax=axes[1])
@@ -143,6 +145,95 @@ def get_length(x, y):
     d = np.diff(points, axis=0)
     return np.sqrt((d ** 2).sum(axis=1)).sum()
 
+
+def get_wetted_parameter(df):
+    """
+    a ordered list of points defining segments of the cross sections
+    get polyline length
+    :param x: a list of x of the polyline
+    :param y: a list of y of the polyline
+    :param n: a list of mannin's n
+    :return:
+    """
+    # TODO: write test case
+    # TODO: for W shaped xs, the water is separated in two channels, and need to remove the water surface length.
+    # df = pd.DataFrame({'offset': x, 'Z': z, 'roughness_N': n})
+    df['length'] = df.loc[:, ['X', 'Y']].diff().apply(lambda x: np.sqrt(x['X'] ** 2 + x['Y'] ** 2), axis=1).fillna(0)
+    df['offset'] = df['length'].cumsum()
+
+    df_segments = pd.DataFrame({'offset': df['offset'].values[:-1],
+                                'n': df['roughness_N'].values[:-1],
+                                'length': df['length'].values[1:]})
+
+    n_average = np.sum(df_segments['n']*df_segments['length'])/np.sum(df_segments['length'])
+    wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values)
+
+    return n_average, wp
+
+def get_conveyance(df, depth):
+    """
+    df is the cross section dataframe
+    X	Y	Z	roughness_N	new_panel
+    :param depth: water depth in the cross section
+    :return:
+    """
+    # TODO: write test case
+    # TODO: for W shaped xs, the water is separated in two channels, and need to remove the water surface length.
+    df = df.copy()
+    df['panel_name'] = ''
+    df['length'] = df.loc[:, ['X', 'Y']].diff().apply(lambda x: np.sqrt(x['X'] ** 2 + x['Y'] ** 2), axis=1).fillna(0)
+    df['offset'] = df['length'].cumsum()
+
+    df_segments = pd.DataFrame({'offset': df['offset'].values[:-1],
+                                'dx': df['offset'].diff().values[1:],
+                                'Y': df['Y'].values[:-1],
+                                'dy': df['Y'].diff().values[1:],
+                                'new_panel': df['offset'].values[:-1],
+                                'roughness_N': df['roughness_N'].values[:-1],
+                                'length': df['length'].values[1:]})
+    # set mark panel
+    panel_list = []
+    for idx, r in df_segments.iterrows():
+        offset = r['offset']
+
+        if idx == 0:
+            panel = offset
+            panel_list.append(panel)
+        else:
+            if r['new_panel']==1:
+                panel = offset
+                panel_list.append(panel)
+        r['panel_name'] = panel
+    # wp calculation depends on where the panel is.
+    if len(panel_list)==1:
+        # single panel, keep both ends
+        pass
+    elif len(panel_list)==2:
+        # two panels, left and right
+        pass
+    else: # more than two
+        # left, middle, right
+        pass
+
+
+
+    n_average = np.sum(df_segments['n']*df_segments['length'])/np.sum(df_segments['length'])
+    wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values)
+
+    return n_average, wp
+
+def get_panel_conveyance(df_segments, depth, panel_type):
+    """
+
+    :param df_segments:
+    :param depth:
+    :param panel_type: 'left', 'middle', 'right', 'single'
+    :return:
+    """
+
+    area = 0
+    for idx, r in df_segments.iterrows():
+        da = (r['Y'] + r['Y'] + r['dy'])*r['dx']/2.0
 
 def line_intersection(line1, line2):
     """
@@ -223,3 +314,73 @@ def cross_section_level(xs, ys, level):
                     line.append([x1, y1])
 
     return line
+
+
+def cut_cross_section(xs, ys, ns, level):
+    """
+    given water level, cut the cross section with only lines touching the water
+    :param xs: list of offset
+    :param ys: list of z
+    :param ns: list of manning's n
+    :param level: water level
+    :return: a list of lines each line is a list of [[x, y, n] ....]
+    """
+    area = 0
+    perimeter = 0
+    lines = []
+    line = []
+    x = list(xs)
+    y = list(ys)
+    n = list(ns)
+    pt_left = [x[0], y[0]]
+    pt_right = [x[-1], y[-1]]
+
+    if level > pt_left[1]: # left side is lower than level
+        x = [pt_left[0]] + x
+        y = [level] + y
+        n = [n[0]] + n
+
+    if level > pt_right[1]: # right side is lower than level
+        x = x + [pt_right[0]]
+        y = y + [level]
+        n = n + [n[0]]
+
+    if level < min(y):
+        # level below the crosse section
+        pass
+    else:
+        for i in range(len(x)):
+            if i == 0:  # first point
+                pass
+            else:
+                x0 = x[i - 1]
+                y0 = y[i - 1]
+                n0 = n[i - 1]
+                x1 = x[i]
+                y1 = y[i]
+                n1 = n[i]
+                if level == y0:
+                    # add point 0
+                    line.append([x0, y0, n0])
+                elif level == y1:
+                    # add point 1
+                    line.append([x1, y1, n1])
+
+                elif level < min(y1, y0):
+                    pass
+                elif (level > y0 and level < y1):  # xs going uphill
+                    line.append([x0, y0, n0])
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    line.append([pt[0], pt[1], n0])
+                    lines.append(line)
+                    line = []
+                elif (level > y1 and level < y0): # xs going downhill
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    line.append([pt[0], pt[1], n0])
+                    line.append([x1, y1, n1])
+                elif (level > y1 and level > y0): # no intersection
+                    line.append([x0, y0, n0])
+                    line.append([x1, y1, n1])
+    if level >= pt_right[1]:
+        lines.append(line)
+    return lines

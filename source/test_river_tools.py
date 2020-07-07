@@ -1,33 +1,36 @@
-from unittest import TestCase
-import river_tools
-import pandas as pd
-import matplotlib.pyplot as plt
+import logging
 import math
 import os
-import matplotlib.animation as animation
-import logging
-import seaborn as sns
+from unittest import TestCase
 
+import matplotlib.animation as animation
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+import river_tools
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-    datefmt='%Y-%m-%d:%H:%M:%S',
-    level=logging.DEBUG)
+                    datefmt='%Y-%m-%d:%H:%M:%S',
+                    level=logging.DEBUG)
+
 
 class TestRiverTools(TestCase):
     def setUp(self) -> None:
         f = './test/river/cross_section.xlsx'
         self.f = f
+
     def test_get_area(self):
         f = self.f
         df = pd.read_excel(f, 'Sheet1')
         area = river_tools.get_area(df['station'], df['z'])
-        assert(area == 350)
+        assert (area == 350)
 
     def test_get_length(self):
         f = self.f
         df = pd.read_excel(f, 'Sheet1')
         p = river_tools.get_length(df['station'], df['z'])
-        assert(math.fabs(p - 53.17424803612103) < 0.01)
+        assert (math.fabs(p - 53.17424803612103) < 0.01)
 
     def test_cross_section_level(self):
         f = self.f
@@ -61,8 +64,8 @@ class TestRiverTools(TestCase):
         xs = river_tools.CrossSection(df=df, sta_fld='station', z_fld='z', n_fld='roughness', panel_fld='pannel')
         xs.set_level(369.33)
         print(xs.area, xs.wp)
-        assert(math.fabs(xs.area - 521.2892089281231) < 0.001)
-        assert(math.fabs(xs.wp - 163.25403385373312) < 0.001)
+        assert (math.fabs(xs.area - 521.2892089281231) < 0.001)
+        assert (math.fabs(xs.wp - 163.25403385373312) < 0.001)
 
     def test_cross_section_plot(self):
         f = self.f
@@ -73,6 +76,7 @@ class TestRiverTools(TestCase):
         fig = xs.plot(level)
         plt.show()
         self.fail()
+
     def test_cross_section_plot_animation(self):
         f = self.f
         out_folder = './test/river/tmp'
@@ -114,10 +118,49 @@ class TestRiverTools(TestCase):
         fig.savefig(out_png)
         self.fail()
 
+    def test_get_wetted_perimeter(self):
+        csv_path = './test/river/icm/xs.csv'
+        output_folder = './test/river/icm/tmp'
+        df = pd.read_csv(csv_path)
+        xs_name = 'BalzerC_Reach1_4_000'
+        n, wp = river_tools.get_wetted_parameter(df)
+        print(n, wp)
+        self.fail()
 
+    def test_cut_cross_section_line(self):
+        csv_path = './test/river/icm/xs.csv'
+        output_folder = './test/river/icm/tmp'
+        df = pd.read_csv(csv_path)
+        xs = df['offset'].values
+        ys = df['Z'].values
+        ns = df['roughness_N'].values
+        all_checks = {311.8: [{'sta': 4.42043478377046, 'width': 105.24753803024845},
+                              {'sta': 142.78310982485263, 'width': 10.481538460915516},
+                              {'sta': 192.5851427915494, 'width': 3.1768285709524093}],
+                      312: [{'sta': 20.44083333254138, 'width': 105.24753803024845},
+                              {'sta': 142.78310982485263, 'width': 10.481538460915516},
+                              {'sta': 192.5851427915494, 'width': 3.1768285709524093}],
+                      311.6: [{'sta': 20.44083333254138, 'width': 105.24753803024845},
+                              {'sta': 142.78310982485263, 'width': 10.481538460915516},
+                              {'sta': 192.5851427915494, 'width': 3.1768285709524093}]
+                      }
+        for level in [
+        #     311.8,   # higher than righ
+        # 312,  # higher than both left and right
+        311.6]:   # below than both sides
 
+            checks = all_checks[level]
+            lines = river_tools.cut_cross_section(xs, ys, ns, level)
+            plt.plot(df['offset'], df['Z'])
+            plt.plot([np.min(df['offset']), np.max(df['offset'])], [level, level])
 
+            for idx, line in enumerate(lines):
+                df2 = pd.DataFrame({'x': [x for x, y, n in line], 'z': [y for x, y, n in line]})
+                width = line[-1][0] - line[0][0]
+                check = checks[idx]
+                self.assertAlmostEqual(check['sta'], line[0][0])
+                self.assertAlmostEqual(check['width'], width)
 
+                plt.plot(df2['x'], df2['z'])
 
-
-
+            plt.show()
