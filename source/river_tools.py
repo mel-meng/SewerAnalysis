@@ -1,3 +1,5 @@
+from typing import Dict, Any
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -6,9 +8,10 @@ import csv
 import logging
 import seaborn as sns
 
-logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
-                    datefmt='%Y-%m-%d:%H:%M:%S',
-                    level=logging.DEBUG)
+# logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
+#                     datefmt='%Y-%m-%d:%H:%M:%S',
+#                     level=logging.DEBUG)
+from pandas import DataFrame
 
 
 def read_icm_cross_section_survey_section_array_csv(csv_path):
@@ -54,23 +57,25 @@ hw_cross_section_survey_section_array	1093.1	546618.976	4804330.849	291.4439087	
 
 
 def icm_xs_add_offset(xs_list):
-
     for xs in xs_list.copy():
         df = xs_list[xs]
         for fld in df.columns:
             if fld in ['X', 'Y', 'Z', 'roughness_N', 'new_panel']:
                 df[fld] = pd.to_numeric(df[fld], errors='roughness_N')
-        df['length'] = df.loc[:, ['X', 'Y']].diff().apply(lambda x: np.sqrt(x['X']**2 + x['Y']**2), axis=1).fillna(0)
+        df['length'] = df.loc[:, ['X', 'Y']].diff().apply(lambda x: np.sqrt(x['X'] ** 2 + x['Y'] ** 2), axis=1).fillna(
+            0)
         df['offset'] = df['length'].cumsum()
         xs_list[xs] = df
     return xs_list
 
 
-def plot_xs(df, xs_name):
-
+def plot_xs(df, xs_name, fig=None, axes=None):
     # TODO: add flood level alex
     sns.set()
-    fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
+    if fig:
+        pass
+    else:
+        fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
     # sns.lineplot(x='offset', y='Z', data=df, ax=axes[1])
     axes[1].plot(df['offset'], df['Z'])
     axes[1].set_ylabel('Bed Elevation')
@@ -79,7 +84,7 @@ def plot_xs(df, xs_name):
     zmin = min(df['Z'])
     for x in df.loc[df['new_panel'] == 1, 'offset'].values:
         axes[1].plot([x, x], [zmin, zmax], linestyle='--', color='grey')
-    axes[0].plot(df['offset'], df['roughness_N'])
+    axes[0].step(df['offset'], df['roughness_N'], where='post')
     axes[0].set_ylabel('Roughness')
     fig.suptitle(xs_name)
     return fig
@@ -165,10 +170,11 @@ def get_wetted_parameter(df):
                                 'n': df['roughness_N'].values[:-1],
                                 'length': df['length'].values[1:]})
 
-    n_average = np.sum(df_segments['n']*df_segments['length'])/np.sum(df_segments['length'])
+    n_average = np.sum(df_segments['n'] * df_segments['length']) / np.sum(df_segments['length'])
     wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values)
 
     return n_average, wp
+
 
 def get_conveyance(df, depth):
     """
@@ -200,27 +206,26 @@ def get_conveyance(df, depth):
             panel = offset
             panel_list.append(panel)
         else:
-            if r['new_panel']==1:
+            if r['new_panel'] == 1:
                 panel = offset
                 panel_list.append(panel)
         r['panel_name'] = panel
     # wp calculation depends on where the panel is.
-    if len(panel_list)==1:
+    if len(panel_list) == 1:
         # single panel, keep both ends
         pass
-    elif len(panel_list)==2:
+    elif len(panel_list) == 2:
         # two panels, left and right
         pass
-    else: # more than two
+    else:  # more than two
         # left, middle, right
         pass
 
-
-
-    n_average = np.sum(df_segments['n']*df_segments['length'])/np.sum(df_segments['length'])
+    n_average = np.sum(df_segments['n'] * df_segments['length']) / np.sum(df_segments['length'])
     wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values)
 
     return n_average, wp
+
 
 def get_panel_conveyance(df_segments, depth, panel_type):
     """
@@ -233,7 +238,8 @@ def get_panel_conveyance(df_segments, depth, panel_type):
 
     area = 0
     for idx, r in df_segments.iterrows():
-        da = (r['Y'] + r['Y'] + r['dy'])*r['dx']/2.0
+        da = (r['Y'] + r['Y'] + r['dy']) * r['dx'] / 2.0
+
 
 def line_intersection(line1, line2):
     """
@@ -316,12 +322,13 @@ def cross_section_level(xs, ys, level):
     return line
 
 
-def cut_cross_section(xs, ys, ns, level):
+def cut_cross_section(xs, ys, ns, ps, level):
     """
     given water level, cut the cross section with only lines touching the water
     :param xs: list of offset
     :param ys: list of z
     :param ns: list of manning's n
+    :param ps: list of pannel markers
     :param level: water level
     :return: a list of lines each line is a list of [[x, y, n] ....]
     """
@@ -332,18 +339,25 @@ def cut_cross_section(xs, ys, ns, level):
     x = list(xs)
     y = list(ys)
     n = list(ns)
+    p = list(ps)
     pt_left = [x[0], y[0]]
     pt_right = [x[-1], y[-1]]
 
-    if level > pt_left[1]: # left side is lower than level
+    if level > pt_left[1]:  # left side is lower than level
         x = [pt_left[0]] + x
         y = [level] + y
         n = [n[0]] + n
+        if p[0] == 1:
+            p[0] = 0
+            p = [1] + p
 
-    if level > pt_right[1]: # right side is lower than level
+    if level > pt_right[1]:  # right side is lower than level
         x = x + [pt_right[0]]
         y = y + [level]
-        n = n + [n[0]]
+        n = n + [n[-1]]
+        if p[-1] == 1:
+            p[-1] = 0
+            p = p + [1]
 
     if level < min(y):
         # level below the crosse section
@@ -356,31 +370,155 @@ def cut_cross_section(xs, ys, ns, level):
                 x0 = x[i - 1]
                 y0 = y[i - 1]
                 n0 = n[i - 1]
+                p0 = p[i - 1]
+
                 x1 = x[i]
                 y1 = y[i]
                 n1 = n[i]
+                p1 = p[i]
                 if level == y0:
                     # add point 0
-                    line.append([x0, y0, n0])
+                    line.append([x0, y0, n0, p0])
                 elif level == y1:
                     # add point 1
-                    line.append([x1, y1, n1])
+                    line.append([x1, y1, n1, p1])
 
                 elif level < min(y1, y0):
                     pass
                 elif (level > y0 and level < y1):  # xs going uphill
-                    line.append([x0, y0, n0])
+                    line.append([x0, y0, n0, p0])
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
-                    line.append([pt[0], pt[1], n0])
+                    line.append([pt[0], pt[1], 0, p0])  # set the n to 0 for hitting the bank
                     lines.append(line)
                     line = []
-                elif (level > y1 and level < y0): # xs going downhill
+                elif (level > y1 and level < y0):  # xs going downhill
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
-                    line.append([pt[0], pt[1], n0])
-                    line.append([x1, y1, n1])
-                elif (level > y1 and level > y0): # no intersection
-                    line.append([x0, y0, n0])
-                    line.append([x1, y1, n1])
+                    line.append([pt[0], pt[1], n0, p0])
+                    line.append([x1, y1, n1, p1])
+                elif (level > y1 and level > y0):  # no intersection
+                    line.append([x0, y0, n0, p0])
+                    line.append([x1, y1, n1, p1])
     if level >= pt_right[1]:
         lines.append(line)
     return lines
+
+
+def cut_xs(xs, ys, ns, level):
+    """
+    given water level, cut the cross section with only lines touching the water
+    :param xs: list of offset
+    :param ys: list of z
+    :param ns: list of manning's n
+    :param level: water level
+    :return: the wetted perimeter line, for lines that is under the ground, the n is set as 0
+    """
+    # make a copy of all the lines
+    line = []
+    x = list(xs)
+    y = list(ys)
+    n = list(ns)
+    pt_left = [x[0], y[0]]  # the first point of the xs
+    pt_right = [x[-1], y[-1]]  # the last point of the xs
+
+    if level > pt_left[1]:  # left side is lower than level
+        x = [pt_left[0]] + x
+        y = [level] + y
+        n = [n[0]] + n
+
+    if level > pt_right[1]:  # right side is lower than level
+        x = x + [pt_right[0]]
+        y = y + [level]
+        n = n + [n[-1]]
+
+    if level < min(y):
+        # level below the XS
+        logging.warning('level is lower than the bottom of the xs')
+    else:
+        for i in range(len(x)):
+            if i == 0:  # first point
+                pass
+            else:
+                # current point
+                x0 = x[i - 1]
+                y0 = y[i - 1]
+                n0 = n[i - 1]
+
+                # previous point
+                x1 = x[i]
+                y1 = y[i]
+                n1 = n[i]
+
+                if level == y0:  # level is the same as current point
+                    # add point 0
+                    line.append([x0, y0, n0])
+                elif level == y1:  # level is the same as previous point
+                    # add point 1
+                    line.append([x1, y1, n1])
+
+                elif y0 < level < y1:  # xs going uphill, hitting the bank and line stops
+                    line.append([x0, y0, n0])
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    line.append([pt[0], pt[1], 0])  # set the n to 0 for hitting the bank
+                elif y1 < level < y0:  # xs going downhill, leaving the bank line starts
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    line.append([pt[0], pt[1], n0])
+                    line.append([x1, y1, n1])
+                elif level > y1 and level > y0:  # no intersection
+                    line.append([x0, y0, n0])
+                    line.append([x1, y1, n1])
+    return pd.DataFrame(line, columns=['offset', 'Z', 'roughness_N'])
+
+
+def xs_to_panel(df):
+    """
+    df is the cross section dataframe
+    X	Y	Z	roughness_N	new_panel
+    :param df: xs as dataframe
+    :return:each panel as a dataframe
+    """
+    df = df.copy()
+    df['panel_name'] = ''
+    df['length'] = df.loc[:, ['X', 'Y']].diff().apply(lambda x: np.sqrt(x['X'] ** 2 + x['Y'] ** 2), axis=1).fillna(0)
+    df['offset'] = df['length'].cumsum()
+    df.iloc[0]['new_panel'] = 0  # no panel markers on start and end of the xs
+    df.iloc[-1]['new_panel'] = 0
+    results = {}
+
+    # set mark panel
+    panel_list = []
+    rows = []
+    for idx, r in df.iterrows():
+        offset = r['offset']
+
+        if idx == 0:  # first point
+            panel = '{:.2f}'.format(offset)
+            panel_list.append(panel)
+            rows.append(r)
+
+        else:
+            if r['new_panel'] == 1:
+                # save the panel
+                rows.append(r)
+                results[panel] = {'data': pd.DataFrame(rows)}
+                # start a new panel
+                panel = '{:.2f}'.format(offset)
+                panel_list.append(panel)
+                rows = [r]
+            else:
+                rows.append(r)
+
+    if panel not in results.keys():
+        results[panel] = {'data': pd.DataFrame(rows)}
+
+
+    if len(panel_list) == 1:
+        # single panel
+        panel = panel_list[0]
+        results[panel]['type'] = 'single'
+    else:
+        results[panel_list[0]]['type'] = 'left'
+        results[panel_list[-1]]['type'] = 'right'
+        for panel in panel_list[1:-1]:
+            results[panel]['type'] = 'middle'
+
+    return results
