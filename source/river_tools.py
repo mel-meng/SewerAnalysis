@@ -41,18 +41,18 @@ hw_cross_section_survey_section_array	1093.1	546618.976	4804330.849	291.4439087	
                     if xs_name is None:
                         # first cross section
                         xs_name = l[1]
-                        logging.debug('first xs: %s' % xs_name)
+                        logging.info('first xs: %s' % xs_name)
                     else:  # start of another xs
                         xs_list[xs_name] = pd.DataFrame(rows)
-                        logging.debug('xs saved: %s' % xs_name)
+                        logging.info('xs saved: %s' % xs_name)
                         rows = []
                         xs_name = l[1]
-                        logging.debug('next xs: %s' % xs_name)
+                        logging.info('next xs: %s' % xs_name)
                 rows.append(dict(zip(header, l)))
             i += 1
         # add the last one
         xs_list[xs_name] = pd.DataFrame(rows)
-        logging.debug('xs saved: %s' % xs_name)
+        logging.info('xs saved: %s' % xs_name)
     return xs_list
 
 
@@ -442,7 +442,7 @@ def cut_xs(xs, ys, ns, level):
                 x0 = x[i - 1]
                 y0 = y[i - 1]
                 n0 = n[i - 1]
-
+                logging.info('process segment %s, %s' % (x0, y0))
                 # previous point
                 x1 = x[i]
                 y1 = y[i]
@@ -451,21 +451,28 @@ def cut_xs(xs, ys, ns, level):
                 if level == y0:  # level is the same as current point
                     # add point 0
                     line.append([x0, y0, n0])
-                elif level == y1:  # level is the same as previous point
-                    # add point 1
-                    line.append([x1, y1, n1])
+                    logging.info('same as point %s, %s' % (x0, y0))
+                # elif level == y1:  # level is the same as previous point
+                #     # add point 1
+                #     line.append([x1, y1, n1])
 
                 elif y0 < level < y1:  # xs going uphill, hitting the bank and line stops
                     line.append([x0, y0, n0])
+                    logging.info('uphill add %s, %s' % (x0, y0))
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
                     line.append([pt[0], pt[1], 0])  # set the n to 0 for hitting the bank
+                    logging.info('uphill intersection %s, %s' % (pt[0], pt[1]))
                 elif y1 < level < y0:  # xs going downhill, leaving the bank line starts
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
                     line.append([pt[0], pt[1], n0])
-                    line.append([x1, y1, n1])
-                elif level > y1 and level > y0:  # no intersection
+                    logging.info('downhill intersection %s, %s' % (pt[0], pt[1]))
+                    # line.append([x1, y1, n1])
+                elif level >= y1 and level >= y0:  # no intersection
                     line.append([x0, y0, n0])
-                    line.append([x1, y1, n1])
+                    logging.info('both ends under level add %s, %s' % (x0, y0))
+    # check the last point
+    if level >= y1:
+        line.append([x1, y1, n1])
     return pd.DataFrame(line, columns=['offset', 'Z', 'roughness_N'])
 
 
@@ -521,4 +528,59 @@ def xs_to_panel(df):
         for panel in panel_list[1:-1]:
             results[panel]['type'] = 'middle'
 
-    return results
+    df_list = []
+    for panel in results:
+        position = results[panel]['type']
+        df = results[panel]['data']
+        df['type'] = position
+        df['panel_name'] = panel
+        df_list.append(df)
+    return pd.concat(df_list).reset_index()
+
+def xs_conveyance(df, depth):
+    panels = xs_to_panel(df)
+    rows = []
+    for panel_name in panels:
+        data = panels[panel_name]['data']
+        panel_type = panels[panel_name]['type']
+        rows.append([panel_name] + panel_conveyance(data, depth, panel_type))
+    return pd.DataFrame(rows, columns=['panel_name', 'n', 'wp', 'width', 'area', 'k'])
+
+
+def panel_conveyance(df, depth, type):
+    """
+
+    :param df: panel list of table
+    :param depth: water depth
+    :param type: left, right, middle, single
+    :return: ??
+    """
+    xs = df['offset'].values
+    ys = df['Z'].values
+    ns = df['roughness_N'].values
+    # set n = 0 for panel points
+    if type == 'single':
+        # no changes to manning's n
+        pass
+    elif type == 'left':
+        ns[0] = 0
+    elif type == 'right':
+        ns[-1] = 0
+    elif type == 'middle':
+        ns[0] = 0
+        ns[-1] = 0
+
+    df_wet = cut_xs(xs, ys, ns, depth)
+
+    df_wet['length'] = df_wet['offset'].diff().fillna(0)
+
+    df_segments = pd.DataFrame({'offset': df_wet['offset'].values[:-1],
+                                'n': df_wet['roughness_N'].values[:-1],
+                                'length': df_wet['length'].values[1:]})
+
+    n_average = np.sum(df_segments['n'] * df_segments['length']) / np.sum(df_segments['length']) # average n
+    wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values) # wetted perimeter
+    width = np.max(df_segments['offset']) - np.min(df_segments['offset']) - np.sum(df_segments.loc[df_segments['n'] == 0, 'length'].values) # water surface width
+    area = get_area(df_wet['offset'].values, df_wet['Z'].values)
+    k = 1.49/n_average*area*np.power(area/wp, 2/3.0)
+    return [n_average, wp, width, area, k]
