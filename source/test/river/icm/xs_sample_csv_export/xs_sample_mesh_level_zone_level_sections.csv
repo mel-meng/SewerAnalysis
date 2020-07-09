@@ -1,0 +1,3 @@
+ObjectTable,polygon_id,X,Y,vertex_elev_type,elevation,elev_adjust
+FieldDescription,ID,X coordinate,Y coordinate,Vertex elevation type,Elevation,Elevation adjustment
+UserUnits,,m,m,,m AD,m

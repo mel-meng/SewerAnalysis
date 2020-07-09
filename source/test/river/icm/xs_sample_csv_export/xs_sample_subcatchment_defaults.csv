@@ -1,0 +1,4 @@
+ObjectTable,additional_foul_flow,area_measurement_type,base_flow,land_use_id,rainfall_profile,soil_class,soil_class_host,soil_class_type,rafts_adapt_factor
+FieldDescription,Additional foul flow,Area measurement type,Base flow,Land use ID,Rainfall profile,WRAP soil type,HOST soil class,SPR calculation,RAFTS adapt factor
+UserUnits,m3/s/km2,,m3/s/km2,,,,,,
+hw_subcatchment_defaults,0.,Absolute,0.,DEFAULT,1,2,17,HOST_Soils,1.

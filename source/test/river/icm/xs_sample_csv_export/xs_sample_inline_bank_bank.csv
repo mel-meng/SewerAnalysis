@@ -1,0 +1,3 @@
+ObjectTable,us_node_id,link_suffix,X,Y,Z,discharge_coeff,modular_ratio,rtc_definition
+FieldDescription,US node ID,Link suffix,X coordinate,Y coordinate,Bank level,Discharge coeff - cd,Modular limit,RTC Definition
+UserUnits,,,m,m,m AD,,,

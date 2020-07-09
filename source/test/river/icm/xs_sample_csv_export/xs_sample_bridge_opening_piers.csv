@@ -1,0 +1,3 @@
+ObjectTable,id,id,offset,elevation,width,roughness_N
+FieldDescription,ID,ID,Offset,Level,Width,Roughness Manning's n
+UserUnits,,,m,m AD,m,

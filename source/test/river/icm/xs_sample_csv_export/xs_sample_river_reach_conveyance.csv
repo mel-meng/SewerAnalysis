@@ -1,0 +1,3 @@
+ObjectTable,us_node_id,link_suffix,key,depth,conveyance,area,width,perimeter
+FieldDescription,US node ID,Link suffix,Section key,Depth,Conveyance,Area,Width,Perimeter
+UserUnits,,,,m,m3/s,m2,m,m

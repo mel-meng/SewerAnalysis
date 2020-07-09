@@ -1,0 +1,4 @@
+ObjectTable,inflow,ds_headloss_type,us_headloss_type,ds_headloss_coeff,us_headloss_coeff,roughness_type,sediment_depth,diff1d_type,diff1d_d0,diff1d_d1,diff1d_d2
+FieldDescription,Inflow,DS headloss type,US headloss type,DS headloss coefficient,US headloss coefficient,Roughness type,Sediment depth,1d diffusion type,1d diffusion d0,1d diffusion d1,1d diffusion d2
+UserUnits,m3/s/m,,,,,,mm,,m2/s,m2/s,m2/s
+hw_channel_defaults,0.,Fixed,Fixed,0.,0.,CW,0.,Estuary,10.,10.,0.0001

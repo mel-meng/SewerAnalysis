@@ -1,0 +1,3 @@
+ObjectTable,subcatchment_id,id,suds_structure,control_type,area,num_units,area_subcatchment_pct,unit_surface_width,initial_saturation_pct,impervious_area_treated_pct,outflow_to,drain_to_subcatchment,drain_to_node,surface,pervious_area_treated_pct
+FieldDescription,Subcatchment ID,SUDS structure ID,SUDS control ID,Control type,Area,Number of units,Area of subcatchment (%),Unit surface width,Initial saturation (%),Impervious area treated (%),Outflow to,Drain to subcatchment,Drain to node,Surface,Pervious area treated (%)
+UserUnits,,,,,m2,,,m,,,,,,,

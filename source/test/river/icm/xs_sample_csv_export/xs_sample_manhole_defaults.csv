@@ -1,0 +1,4 @@
+ObjectTable,flood_area_1,flood_area_2,flood_depth_1,flood_depth_2,flood_type,element_area_factor_2d,benching_method,2d_link_type
+FieldDescription,Flood area 1 (%),Flood area 2 (%),Flood depth 1,Flood depth 2,Flood type,2D element area factor,Benching method,1D-2D linkage basis
+UserUnits,,,m,m,,,,
+hw_manhole_defaults,10,100,1.,99.,Stored,1.,Full Benching,Depth

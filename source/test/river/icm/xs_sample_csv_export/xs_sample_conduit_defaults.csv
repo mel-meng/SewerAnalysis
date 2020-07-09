@@ -1,0 +1,4 @@
+ObjectTable,us_headloss_type,ds_headloss_type,roughness_type,us_headloss_coeff,ds_headloss_coeff,bottom_roughness_Manning,top_roughness_Manning,bottom_roughness_CW,top_roughness_CW,top_roughness_N,bottom_roughness_N,bottom_roughness_HW,top_roughness_HW,sediment_depth,inflow,diff1d_type,diff1d_d0,diff1d_d1,diff1d_d2
+FieldDescription,US headloss type,Headloss type,Roughness type,US headloss coefficient,Headloss coefficient,Bottom roughness Manning's 1/n,Top roughness Manning's 1/n,Bottom roughness CW,Top roughness CW,Top roughness Manning's n,Bottom roughness Manning's n,Bottom roughness HW,Top roughness HW,Sediment depth,Inflow,1d diffusion type,1d diffusion d0,1d diffusion d1,1d diffusion d2
+UserUnits,,,,,,,,mm,mm,,,,,mm,m3/s/m,,m2/s,m2/s,m2/s
+hw_conduit_defaults,Normal,Normal,CW,1.,1.,25.,25.,1.5,1.5,0.04,0.04,,,0.,0.,Estuary,10.,10.,0.0001

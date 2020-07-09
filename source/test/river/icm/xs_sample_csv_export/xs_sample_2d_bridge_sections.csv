@@ -1,0 +1,3 @@
+ObjectTable,line_id,X,Y,Z,opening,deck_level
+FieldDescription,ID,X coordinate,Y coordinate,Invert level,Opening height,Deck thickness
+UserUnits,,m,m,m AD,m,m

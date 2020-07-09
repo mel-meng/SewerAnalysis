@@ -1,0 +1,3 @@
+ObjectTable,determinant,rainfall_conc,groundwater_conc,rdii_conc,snow_build_up
+FieldDescription,Determinant,Rainfall concentration,Groundwater concentration,RDII concentration,Build up only during snowfall
+UserUnits,,,,,

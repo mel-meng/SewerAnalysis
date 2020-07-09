@@ -1,0 +1,3 @@
+ObjectTable,us_node_id,link_suffix,X,Y,Z,roughness_N,new_panel,opening_id,opening_side
+FieldDescription,US node ID,Link suffix,X coordinate,Y coordinate,Level,Roughness Manning's n,New panel,Opening,Side
+UserUnits,,,m,m,m AD,,,,

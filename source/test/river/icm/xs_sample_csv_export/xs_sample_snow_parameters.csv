@@ -1,0 +1,4 @@
+ObjectTable,antecedent_temp_idx,elevation,negative_melt_ratio,snow_temperature
+FieldDescription,Antecedent temperature index weight,Catchment elevation,Negative melt ratio,Dividing temperature between snow  rain
+UserUnits,,m AD,,degC
+hw_snow_parameters,0.5,0.,0.6,1.11111

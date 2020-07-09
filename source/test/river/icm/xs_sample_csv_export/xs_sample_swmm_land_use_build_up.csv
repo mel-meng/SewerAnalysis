@@ -1,0 +1,3 @@
+ObjectTable,id,determinant,build_up_type,max_build_up,power_rate_constant,power_time_exponent,exp_rate_constant,saturation_constant
+FieldDescription,Land use ID,Determinant,Build-up type,Max. build-up,Power rate constant,Power time exponent,Exponential rate constant,Half saturation constant
+UserUnits,,,,kg/ha,kg/ha/day,,1/day,days

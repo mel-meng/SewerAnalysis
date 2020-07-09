@@ -1,0 +1,3 @@
+ObjectTable,id,determinant,washoff_type,exponential_washoff_coeff,rating_washoff_coeff,emc_washoff_coeff,washoff_exponent,sweep_removal,bmp_removal
+FieldDescription,Land use ID,Determinant,Washoff type,Exponential washoff coefficient,Rating washoff coefficient,EMC washoff coefficient,Washoff exponent,Cleaning efficiency (%),BMP removal efficiency (%)
+UserUnits,,,,,,,,,

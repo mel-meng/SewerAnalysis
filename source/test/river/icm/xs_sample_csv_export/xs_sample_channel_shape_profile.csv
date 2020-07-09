@@ -1,0 +1,3 @@
+ObjectTable,shape_id,X,Z,roughness_CW,roughness_Manning,new_panel,roughness_N
+FieldDescription,Shape ID,X coordinate,Depth,Roughness Colebrook-White,Roughness Manning's 1/n,New panel,Roughness Manning's n
+UserUnits,,m,m,mm,,,

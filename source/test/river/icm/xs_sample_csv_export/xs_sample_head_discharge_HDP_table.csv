@@ -1,0 +1,3 @@
+ObjectTable,head_discharge_id,head,discharge,power
+FieldDescription,Head discharge ID,Head,Discharge,Power
+UserUnits,,m,m3/s,kW
