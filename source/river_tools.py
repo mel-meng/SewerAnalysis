@@ -410,12 +410,14 @@ def cut_xs(xs, ys, ns, level):
     :param ys: list of z
     :param ns: list of manning's n
     :param level: water level
-    :return: the wetted perimeter line, for lines that is under the ground, the n is set as 0
+    :return: the wetted perimeter line, for lines that is under the ground, the n is set as 0, None if level is lower than the xs
     """
     # make a copy of all the lines
     line = []
     x = list(xs)
     y = list(ys)
+    if level < np.min(ys):
+        return None
     n = list(ns)
     pt_left = [x[0], y[0]]  # the first point of the xs
     pt_right = [x[-1], y[-1]]  # the last point of the xs
@@ -423,12 +425,12 @@ def cut_xs(xs, ys, ns, level):
     if level > pt_left[1]:  # left side is lower than level
         x = [pt_left[0]] + x
         y = [level] + y
-        n = [n[0]] + n
+        n = [0] + n # assume n=0 for the added wall
 
     if level > pt_right[1]:  # right side is lower than level
         x = x + [pt_right[0]]
         y = y + [level]
-        n = n + [n[-1]]
+        n = n + [0] # assume n=0 for the added wall
 
     if level < min(y):
         # level below the XS
@@ -448,15 +450,15 @@ def cut_xs(xs, ys, ns, level):
                 y1 = y[i]
                 n1 = n[i]
 
-                if level == y0:  # level is the same as current point
-                    # add point 0
-                    line.append([x0, y0, n0])
-                    logging.info('same as point %s, %s' % (x0, y0))
+                # if level == y0:  # level is the same as current point
+                #     # add point 0
+                #     line.append([x0, y0, n0])
+                #     logging.info('same as point %s, %s' % (x0, y0))
                 # elif level == y1:  # level is the same as previous point
                 #     # add point 1
                 #     line.append([x1, y1, n1])
 
-                elif y0 < level < y1:  # xs going uphill, hitting the bank and line stops
+                if y0 <= level < y1:  # xs going uphill, hitting the bank and line stops
                     line.append([x0, y0, n0])
                     logging.info('uphill add %s, %s' % (x0, y0))
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
@@ -553,10 +555,12 @@ def panel_conveyance(df, depth, type):
     :param df: panel list of table
     :param depth: water depth
     :param type: left, right, middle, single
-    :return: ??
+    :return: None if depth < xs, otherwise the results
     """
     xs = df['offset'].values
     ys = df['Z'].values
+    if depth < np.min(ys):
+        return None
     ns = df['roughness_N'].values
     # set n = 0 for panel points
     if type == 'single':
@@ -571,16 +575,17 @@ def panel_conveyance(df, depth, type):
         ns[-1] = 0
 
     df_wet = cut_xs(xs, ys, ns, depth)
-
-    df_wet['length'] = df_wet['offset'].diff().fillna(0)
+    df_wet['length'] = df_wet.loc[:, ['offset', 'Z']].diff().apply(lambda x: np.sqrt(x['offset'] ** 2 + x['Z'] ** 2), axis=1).fillna(0)
 
     df_segments = pd.DataFrame({'offset': df_wet['offset'].values[:-1],
                                 'n': df_wet['roughness_N'].values[:-1],
+                                'doffset':df_wet['offset'].diff().values[1:],
                                 'length': df_wet['length'].values[1:]})
 
     n_average = np.sum(df_segments['n'] * df_segments['length']) / np.sum(df_segments['length']) # average n
     wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values) # wetted perimeter
-    width = np.max(df_segments['offset']) - np.min(df_segments['offset']) - np.sum(df_segments.loc[df_segments['n'] == 0, 'length'].values) # water surface width
+    width = np.max(df_wet['offset']) - np.min(df_wet['offset']) - np.sum(df_segments.loc[df_segments['n'] == 0, 'doffset'].values) # water surface width
     area = get_area(df_wet['offset'].values, df_wet['Z'].values)
     k = 1.49/n_average*area*np.power(area/wp, 2/3.0)
-    return [n_average, wp, width, area, k]
+    d = depth - np.min(df_wet['Z'])
+    return [d, n_average, wp, width, area, k, df_wet]

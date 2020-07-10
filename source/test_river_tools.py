@@ -272,13 +272,13 @@ class TestRiverTools(TestCase):
         print(df2)
         df2_check = pd.read_excel(self.f, 'irregular_single_12')
         np.testing.assert_almost_equal(df2.to_numpy(), df2_check.to_numpy(), 3)
-        fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
-        river_tools.plot_xs(df2, 'line', fig, axes)
-
-        axes[1].plot(df['offset'], df['Z'], linestyle='--')
-        axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
-
-        plt.show()
+        # fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
+        # river_tools.plot_xs(df2, 'line', fig, axes)
+        #
+        # axes[1].plot(df['offset'], df['Z'], linestyle='--')
+        # axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
+        #
+        # plt.show()
 
     def test_cut_xs5(self):
         df = pd.read_excel(self.f, 'irregular_multiple')
@@ -316,41 +316,30 @@ class TestRiverTools(TestCase):
         ns = df['roughness_N'].values
         df2 = river_tools.cut_xs(xs, ys, ns, level)
         df2['new_panel'] = 0
+        # print(df2)
         # df2.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\tmp.csv')
         df2_check = pd.read_excel(self.f, 'irregular_multiple_13')
         np.testing.assert_almost_equal(df2.to_numpy(), df2_check.to_numpy(), 2)
-        fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
-        river_tools.plot_xs(df2, 'line', fig, axes)
 
-        axes[1].plot(df['offset'], df['Z'], linestyle='--')
-        axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
-
-        plt.show()
-
-    def test_cut_xs_old(self):
-        csv_path = './test/river/icm/xs.csv'
-        output_folder = './test/river/icm/tmp'
-        df = pd.read_csv(csv_path)
-
-        level = 311.6
+    def test_cut_xs8(self):
+        df = pd.read_excel(self.f, 'irregular_multiple')
+        level = 8  # at top
 
         xs = df['offset'].values
         ys = df['Z'].values
         ns = df['roughness_N'].values
-
         df2 = river_tools.cut_xs(xs, ys, ns, level)
         df2['new_panel'] = 0
-        # df2.to_csv(os.path.join(output_folder, 'xs_311_6.csv'))
-        df2_check = pd.read_csv(os.path.join(output_folder, './../xs_311_6.csv'))
-        np.testing.assert_almost_equal(df2.to_numpy(), df2_check.to_numpy())
-
-        fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
-        river_tools.plot_xs(df2, 'line', fig, axes)
-
-        axes[1].plot(df['offset'], df['Z'], linestyle='--')
-        axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
-
-        plt.show()
+        # df2.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\tmp.csv')
+        df2_check = pd.read_excel(self.f, 'irregular_multiple_8')
+        np.testing.assert_almost_equal(df2.to_numpy(), df2_check.to_numpy(), 2)
+        # fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
+        # river_tools.plot_xs(df2, 'line', fig, axes)
+        #
+        # axes[1].plot(df['offset'], df['Z'], linestyle='--')
+        # axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
+        #
+        # plt.show()
 
     def test_xs_to_panel(self):
         df = pd.read_excel(self.f, 'irregular_multiple_panels')
@@ -368,29 +357,12 @@ class TestRiverTools(TestCase):
                 pass
             else:
                 np.testing.assert_almost_equal(panel_check[fld].values, panels[fld].values, 3)
-        river_tools.plot_xs(panels, 'test')
-        plt.show()
-        import seaborn as sns
-        sns.lineplot(x='offset', y='Z', style='panel_name', data=panels)
-        plt.show()
+        # river_tools.plot_xs(panels, 'test')
+        # plt.show()
+        # import seaborn as sns
+        # sns.lineplot(x='offset', y='Z', style='panel_name', data=panels)
+        # plt.show()
 
-
-
-    def test_xs_to_panel_old(self):
-        csv_path = './test/river/icm/xs.csv'
-        output_folder = './test/river/icm/tmp'
-        df = pd.read_csv(csv_path)
-
-        panels = river_tools.xs_to_panel(df)
-        fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
-
-        for panel in panels:
-            # print(panel)
-            position = panels[panel]['type']
-            panels[panel]['data'].plot(x='offset', y='roughness_N', ax=axes[0], drawstyle="steps-post")
-            panels[panel]['data'].plot(x='offset', y='Z', ax=axes[1], label='%s(%s)' % (panel, position), marker='o')
-        plt.show()
-        self.fail()
     def test_xs_conveyance(self):
         csv_path = './test/river/icm/xs.csv'
         output_folder = './test/river/icm/tmp'
@@ -400,11 +372,54 @@ class TestRiverTools(TestCase):
         print(panels)
         print(panels.sum())
         self.fail()
+
     def test_panel_conveyance(self):
         # TODO: need to get this one tested using the testing section for single one
         df = pd.read_excel(self.f, 'irregular_multiple_panels')
-        print(df.describe())
-        depth = 10
-        results = river_tools.panel_conveyance(df, depth, 'single')
+        rows = []
+        for depth in range(-5,20):
+            v = river_tools.panel_conveyance(df, depth, 'single')
+            if v:
+                rows.append(v)
+            else:
+                logging.warning('no results returned for depth:%s' % depth)
+        # d, n_average, wp, width, area, k
+        df_convey = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k'])
+        df_convey.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\convey.csv')
+        self.fail()
+
+    def test_panel_conveyance(self):
+
+        df = pd.read_excel(self.f, 'irregular_multiple_panels')
+        rows = []
+        for depth in [0,2,5,8,10,11,12,15]:
+            v = river_tools.panel_conveyance(df, depth, 'single')
+            rows.append(v[:-1])
+        # d, n_average, wp, width, area, k
+        df_convey = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k'])
+        # from ICM results
+        df_check = pd.read_excel(self.f, 'irregular_multiple_panels_res')
+        for fld in ['area', 'width', 'wp']:
+            np.testing.assert_almost_equal(df_convey[fld].values, df_check[fld].values, 3)
+
+    def test_panel_conveyance15(self):
+        # TODO: need to get this one tested using the testing section for single one
+        df = pd.read_excel(self.f, 'irregular_multiple_panels')
+        rows = []
+        for depth in [15]:
+            v = river_tools.panel_conveyance(df, depth, 'single')
+            # rows.append(v[:-1])
+            df_wet = v[-1]
+            df_wet.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\wet.csv')
+            df_wet['new_panel'] = 0
+            print('width:', v[3])
+
+            fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
+            river_tools.plot_xs(df_wet, 'line', fig, axes)
+
+            axes[1].plot(df['offset'], df['Z'], linestyle='--')
+            axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [depth, depth], linestyle='--')
+            plt.show()
+
         self.fail()
 
