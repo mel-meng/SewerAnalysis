@@ -364,14 +364,26 @@ class TestRiverTools(TestCase):
         # plt.show()
 
     def test_xs_conveyance(self):
-        csv_path = './test/river/icm/xs.csv'
-        output_folder = './test/river/icm/tmp'
-        df = pd.read_csv(csv_path)
-        level = 311.623
-        panels = river_tools.xs_conveyance(df, level)
-        print(panels)
-        print(panels.sum())
-        self.fail()
+        df = pd.read_excel(self.f, 'irregular_multiple_panels')
+        rows = []
+        for depth in [0,2,5,8,10,11,12,15]:
+            v = river_tools.xs_conveyance(df, depth)
+            rows.append(v)
+        # d, n_average, wp, width, area, k
+        df_convey = pd.DataFrame(rows, columns=['wp', 'width', 'area', 'k']).fillna(0)
+        df_convey.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\convey.csv')
+        # from ICM results
+        df_check = pd.read_excel(self.f, 'irregular_multiple_panels_cv')
+        for fld in ['wp', 'area', 'width', 'wp']:
+            np.testing.assert_almost_equal(df_convey[fld].values, df_check[fld].values, 3)
+        # csv_path = './test/river/icm/xs.csv'
+        # output_folder = './test/river/icm/tmp'
+        # df = pd.read_csv(csv_path)
+        # level = 311.623
+        # panels = river_tools.xs_conveyance(df, level)
+        # print(panels)
+        # print(panels.sum())
+        # self.fail()
 
     def test_panel_conveyance(self):
         # TODO: need to get this one tested using the testing section for single one
@@ -397,8 +409,25 @@ class TestRiverTools(TestCase):
             rows.append(v[:-1])
         # d, n_average, wp, width, area, k
         df_convey = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k'])
+        df_convey.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\convey.csv')
         # from ICM results
         df_check = pd.read_excel(self.f, 'irregular_multiple_panels_res')
+        for fld in ['area', 'width', 'wp']:
+            np.testing.assert_almost_equal(df_convey[fld].values, df_check[fld].values, 3)
+
+    def test_panel_conveyance_xs(self):
+        # TODO: still don't get the same conveyance k from ICM
+        # When using the same n, it gets close to .99. But with multiple n values, it can get 1.2.
+        df = pd.read_excel(self.f, 'xs_single_n')
+        rows = []
+        for depth in [0,2,5,8,10,11,12,15]:
+            v = river_tools.panel_conveyance(df, depth, 'single')
+            rows.append(v[:-1])
+        # d, n_average, wp, width, area, k
+        df_convey = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k']).fillna(0)
+        df_convey.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\convey.csv')
+        # from ICM results
+        df_check = pd.read_excel(self.f, 'xs_single_n_check')
         for fld in ['area', 'width', 'wp']:
             np.testing.assert_almost_equal(df_convey[fld].values, df_check[fld].values, 3)
 
@@ -422,4 +451,23 @@ class TestRiverTools(TestCase):
             plt.show()
 
         self.fail()
+    def test_plot_conveyance(self):
+        df = pd.read_excel(self.f, 'irregular_multiple_panels')
+        fig = river_tools.plot_conveyance(df, 'test')
+        plt.show()
+        self.fail()
+
+    def test_batch_plot_conveyance(self):
+        csv_path = './test/river/icm/xs_sample_csv_export/xs_sample_cross_section_survey_section_array.csv'
+        output_folder = './test/river/icm/tmp'
+        xs_list = river_tools.read_icm_cross_section_survey_section_array_csv(csv_path)
+        xs_list = river_tools.icm_xs_add_offset(xs_list)
+        for xs in xs_list:
+            df = xs_list[xs]
+            df['new_panel'] = 0
+            print(xs)
+            print(df)
+            fig = river_tools.plot_conveyance(df, xs)
+            fig.savefig(os.path.join(output_folder, '%s.png' % xs))
+
 

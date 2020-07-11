@@ -37,6 +37,16 @@ hw_cross_section_survey_section_array	1093.1	546618.976	4804330.849	291.4439087	
             if i == 2:
                 units = l
             if i >= 3:
+                # X	Y	Z	roughness_N	new_panel
+                for idx in [2, 3, 4, 5, 6]:
+                    # try:
+                    if True:
+                        l[idx] = float(l[idx])
+                    # except Exception:
+                    #     l[idx] = 0
+                    #
+
+
                 if len(l[1]) > 0:
                     if xs_name is None:
                         # first cross section
@@ -444,7 +454,7 @@ def cut_xs(xs, ys, ns, level):
                 x0 = x[i - 1]
                 y0 = y[i - 1]
                 n0 = n[i - 1]
-                logging.info('process segment %s, %s' % (x0, y0))
+                logging.debug('process segment %s, %s' % (x0, y0))
                 # previous point
                 x1 = x[i]
                 y1 = y[i]
@@ -458,20 +468,22 @@ def cut_xs(xs, ys, ns, level):
                 #     # add point 1
                 #     line.append([x1, y1, n1])
 
-                if y0 <= level < y1:  # xs going uphill, hitting the bank and line stops
+                if level == y0:
                     line.append([x0, y0, n0])
-                    logging.info('uphill add %s, %s' % (x0, y0))
+                elif y0 < level < y1:  # xs going uphill, hitting the bank and line stops
+                    line.append([x0, y0, n0])
+                    logging.debug('uphill add %s, %s' % (x0, y0))
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
                     line.append([pt[0], pt[1], 0])  # set the n to 0 for hitting the bank
-                    logging.info('uphill intersection %s, %s' % (pt[0], pt[1]))
+                    logging.debug('uphill intersection %s, %s' % (pt[0], pt[1]))
                 elif y1 < level < y0:  # xs going downhill, leaving the bank line starts
                     pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
                     line.append([pt[0], pt[1], n0])
-                    logging.info('downhill intersection %s, %s' % (pt[0], pt[1]))
+                    logging.debug('downhill intersection %s, %s' % (pt[0], pt[1]))
                     # line.append([x1, y1, n1])
                 elif level >= y1 and level >= y0:  # no intersection
                     line.append([x0, y0, n0])
-                    logging.info('both ends under level add %s, %s' % (x0, y0))
+                    logging.debug('both ends under level add %s, %s' % (x0, y0))
     # check the last point
     if level >= y1:
         line.append([x1, y1, n1])
@@ -539,14 +551,25 @@ def xs_to_panel(df):
         df_list.append(df)
     return pd.concat(df_list).reset_index()
 
+
 def xs_conveyance(df, depth):
     panels = xs_to_panel(df)
     rows = []
-    for panel_name in panels:
-        data = panels[panel_name]['data']
-        panel_type = panels[panel_name]['type']
-        rows.append([panel_name] + panel_conveyance(data, depth, panel_type))
-    return pd.DataFrame(rows, columns=['panel_name', 'n', 'wp', 'width', 'area', 'k'])
+    for panel_name in panels['panel_name'].unique():
+        data = panels.loc[panels['panel_name']==panel_name, ]
+        panel_type = data['type'].values[0]
+        p = panel_conveyance(data, depth, panel_type)
+
+        if p:
+            rows.append(p[:-1])
+            df_wet = p[-1]
+            df_wet['new_panel'] = 0
+            # fig = plot_xs(df_wet, '%s_%s (%s)' % (panel_name, depth, panel_type))
+            # fig.savefig(os.path.join(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\tmp', '%s_%s.png' % (panel_name, depth)))
+    # d, n_average, wp, width, area, k, df_we
+    df = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k'])
+    s = df.sum()
+    return depth, s['wp'], s['width'], s['area'], s['k']
 
 
 def panel_conveyance(df, depth, type):
@@ -567,9 +590,9 @@ def panel_conveyance(df, depth, type):
         # no changes to manning's n
         pass
     elif type == 'left':
-        ns[0] = 0
-    elif type == 'right':
         ns[-1] = 0
+    elif type == 'right':
+        ns[0] = 0
     elif type == 'middle':
         ns[0] = 0
         ns[-1] = 0
@@ -582,10 +605,55 @@ def panel_conveyance(df, depth, type):
                                 'doffset':df_wet['offset'].diff().values[1:],
                                 'length': df_wet['length'].values[1:]})
 
-    n_average = np.sum(df_segments['n'] * df_segments['length']) / np.sum(df_segments['length']) # average n
+    df_n = df_segments.loc[df_segments['n']>0, ] # remove any segments that are not wet
+    n_average = np.sum(df_n['n'] * df_n['length']) / np.sum(df_n['length']) # average n
     wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values) # wetted perimeter
     width = np.max(df_wet['offset']) - np.min(df_wet['offset']) - np.sum(df_segments.loc[df_segments['n'] == 0, 'doffset'].values) # water surface width
     area = get_area(df_wet['offset'].values, df_wet['Z'].values)
     k = 1.49/n_average*area*np.power(area/wp, 2/3.0)
     d = depth - np.min(df_wet['Z'])
     return [d, n_average, wp, width, area, k, df_wet]
+
+
+def plot_conveyance(df, xs_name, fig=None):
+
+    rows = []
+
+    for depth in sorted(df['Z'].unique()):
+        v = xs_conveyance(df, depth)
+        rows.append(v)
+    # d, n_average, wp, width, area, k
+    df_convey = pd.DataFrame(rows, columns=['depth', 'wp', 'width', 'area', 'k']).fillna(0)
+    # TODO: add flood level alex
+    sns.set()
+    if fig:
+        pass
+    else:
+        fig, axes = plt.subplots(2, 2, sharey='row', sharex='col',
+                                 gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001}, figsize=(15,12))
+    # sns.lineplot(x='offset', y='Z', data=df, ax=axes[1])
+    axes[1][0].plot(df['offset'], df['Z'])
+    axes[1][0].set_ylabel('Bed Elevation')
+    axes[1][0].set_xlabel('Offset')
+    zmax = max(df['Z'])
+    zmin = min(df['Z'])
+    for x in df.loc[df['new_panel'] == 1, 'offset'].values:
+        axes[1][0].plot([x, x], [zmin, zmax],  linestyle='--', color='grey')
+    axes[0][0].step(df['offset'], df['roughness_N'], where='post')
+    axes[0][0].set_ylabel('Roughness')
+    axes[1][1].plot(df_convey['k'], df_convey['depth'], marker='o')
+    axes[1][1].set_xlabel('conveyance')
+    axes[1][1].set_ylabel('Water Level')
+    # plot diff
+    dk = df_convey['k'].diff()/df_convey['depth'].diff()
+    dk = dk.fillna(0)
+    print(dk)
+    sf = (np.max(df_convey['k'].values) - np.min(df_convey['k'].values))/(np.max(dk.values) - np.min(dk.values))
+    dk = dk*sf
+    dk = dk - np.min(dk.values)
+
+    axes[1][1].plot(dk, df_convey['depth'], color='red', marker='x', linestyle='--')
+    fig.suptitle(xs_name)
+    plt.tight_layout()
+    return fig
+
