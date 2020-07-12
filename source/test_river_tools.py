@@ -12,7 +12,7 @@ import river_tools
 
 logging.basicConfig(format='%(asctime)s,%(msecs)d %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s',
                     datefmt='%Y-%m-%d:%H:%M:%S',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 
 
 class TestRiverTools(TestCase):
@@ -470,4 +470,22 @@ class TestRiverTools(TestCase):
             fig = river_tools.plot_conveyance(df, xs)
             fig.savefig(os.path.join(output_folder, '%s.png' % xs))
 
+    def test_cut_xs_new(self):
 
+        df = pd.read_excel(self.f, 'irregular_multiple_panels')
+        level = 15  # at top
+        for level in [0,2,8,5,10,11,12,15, 20]:
+            xs = df['offset'].values
+            ys = df['Z'].values
+            ns = df['roughness_N'].values
+            ps = df['new_panel'].values
+            lines = river_tools.cut_xs_new(xs, ys, ns, ps, level)
+            fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
+            river_tools.plot_xs(df, level, fig, axes)
+            axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
+            for line in lines:
+                axes[1].plot(line['offset'], line['Z'], linewidth=3, linestyle='--', label='a')
+                # axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
+            plt.legend()
+
+            plt.show()

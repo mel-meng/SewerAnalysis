@@ -413,6 +413,114 @@ def cut_cross_section(xs, ys, ns, ps, level):
     return lines
 
 
+def cut_xs_new(xs, ys, ns, ps, level):
+    """
+    given water level, cut the cross section with only lines touching the water
+    :param xs: list of offset
+    :param ys: list of z
+    :param ns: list of manning's n
+    :param ps: list of panel markers, 0 no, 1 yes
+    :param level: water level
+    :return: the wetted perimeter line, for lines that is under the ground, the n is set as 0, None if level is lower than the xs
+    """
+    # make a copy of all the lines
+    panels = []
+    line = []
+    x = list(xs)
+    y = list(ys)
+    p = list(ps) # panel markers
+    n = list(ns)
+
+    # no panel markers on start and end of the xs
+    p[0] = 0
+    p[-1] = 0
+
+    logging.debug(p)
+    logging.debug(n)
+
+    if level < np.min(ys):
+        return None
+
+    pt_left = [x[0], y[0]]  # the first point of the xs
+    pt_right = [x[-1], y[-1]]  # the last point of the xs
+
+    if level > pt_left[1]:  # left side is lower than level
+        x = [pt_left[0]] + x
+        y = [level] + y
+        n = [0] + n # assume n=0 for the added wall
+        p = [0] + p
+
+
+
+    if level < min(y):
+        # level below the XS
+        logging.warning('level is lower than the bottom of the xs')
+    else:
+        for i in range(len(x)):
+            logging.debug('processing point:%s' % i)
+            if i == 0:  # first point
+                pass
+            else:
+                # current point
+                x0 = x[i - 1]
+                y0 = y[i - 1]
+                n0 = n[i - 1]
+                p0 = p[i - 1]
+                logging.debug('process segment %s, %s' % (x0, y0))
+                logging.debug('%s,%s,%s,%s' % (x0, y0, n0, p0))
+                # previous point
+                x1 = x[i]
+                y1 = y[i]
+                n1 = n[i]
+                p1 = p[i]
+
+                if level == y0:
+                    line.append([x0, y0, n0])
+                    if p0 == 1:  # new marker
+                        panels.append(line)
+                        line = [[x0, y0, n0]]
+                elif y0 < level <= y1:  # xs going uphill, hitting the bank and line stops
+                    line.append([x0, y0, n0])
+                    logging.debug('uphill add %s, %s' % (x0, y0))
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    if p0 == 1:  # new marker
+                        line.append([x0, y0, n0])
+                        line.append([x0, level, 0])
+                        panels.append(line)
+                        line = [[x0, level, 0], [x0, y0, n0]]
+                    line.append([pt[0], pt[1], n0])
+                    logging.debug('uphill intersection %s, %s' % (pt[0], pt[1]))
+                elif y1 <= level < y0:  # xs going downhill, leaving the bank line starts
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    if p0 == 1:
+                        logging.debug('new panel')
+                        line.append([x0, level, 0])
+                        panels.append(line)
+                        line = [[x0, level, 0]]
+                    line.append([pt[0], pt[1], n0])
+                    logging.debug('downhill intersection %s, %s' % (pt[0], pt[1]))
+                elif level >= y1 and level >= y0:  # no intersection
+                    line.append([x0, y0, n0])
+                    logging.debug('both ends under level add %s, %s' % (x0, y0))
+                    if p0 == 1:
+                        logging.debug('new panel')
+                        line.append([x0, level, 0])
+                        panels.append(line)
+                        line = [[x0, level, 0], [x0, y0, n0]]
+    # check the last point
+    if level >= y1:
+        line.append([x1, y1, 0])
+        line.append([x1, level, 0])
+
+
+
+    panels.append(line)
+    results = []
+    for line in panels:
+        results.append(pd.DataFrame(line, columns=['offset', 'Z', 'roughness_N']))
+    return results
+
+
 def cut_xs(xs, ys, ns, level):
     """
     given water level, cut the cross section with only lines touching the water
