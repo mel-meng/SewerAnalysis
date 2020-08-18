@@ -471,7 +471,7 @@ class TestRiverTools(TestCase):
             fig.savefig(os.path.join(output_folder, '%s.png' % xs))
 
     def test_cut_xs_new(self):
-
+        ## TODO: need to add a flat segment see how that works. it is not working correctly
         df = pd.read_excel(self.f, 'irregular_multiple_panels')
         level = 15  # at top
         for level in [0,2,8,5,10,11,12,15, 20]:
@@ -482,10 +482,25 @@ class TestRiverTools(TestCase):
             lines = river_tools.cut_xs_new(xs, ys, ns, ps, level)
             fig, axes = plt.subplots(2, sharex=True, gridspec_kw={'height_ratios': [1, 3], 'hspace': 0.001})
             river_tools.plot_xs(df, level, fig, axes)
-            axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
+            # axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
             for line in lines:
                 axes[1].plot(line['offset'], line['Z'], linewidth=3, linestyle='--', label='a')
+                axes[0].step(line['offset'], line['roughness_N'], where='post')
                 # axes[1].plot([np.min(df['offset']), np.max(df['offset'])], [level, level], linestyle='--')
             plt.legend()
 
             plt.show()
+
+    def test_xs_conveyance(self):
+        df = pd.read_excel(self.f, 'irregular_multiple_panels')
+        rows = []
+        for depth in [0,2,5,8,10,11,12,15]:
+            v = river_tools.xs_conveyance_new(df, depth)
+            rows.append(v)
+        # d, n_average, wp, width, area, k
+        df_convey = pd.DataFrame(rows, columns=['depth', 'wp', 'width', 'area', 'k']).fillna(0)
+        df_convey.to_csv(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\convey.csv')
+        # from ICM results
+        df_check = pd.read_excel(self.f, 'irregular_multiple_panels_cv')
+        for fld in ['wp', 'area', 'width', 'wp']:
+            np.testing.assert_almost_equal(df_convey[fld].values, df_check[fld].values, 3)

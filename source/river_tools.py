@@ -413,113 +413,6 @@ def cut_cross_section(xs, ys, ns, ps, level):
     return lines
 
 
-def cut_xs_new(xs, ys, ns, ps, level):
-    """
-    given water level, cut the cross section with only lines touching the water
-    :param xs: list of offset
-    :param ys: list of z
-    :param ns: list of manning's n
-    :param ps: list of panel markers, 0 no, 1 yes
-    :param level: water level
-    :return: the wetted perimeter line, for lines that is under the ground, the n is set as 0, None if level is lower than the xs
-    """
-    # make a copy of all the lines
-    panels = []
-    line = []
-    x = list(xs)
-    y = list(ys)
-    p = list(ps) # panel markers
-    n = list(ns)
-
-    # no panel markers on start and end of the xs
-    p[0] = 0
-    p[-1] = 0
-
-    logging.debug(p)
-    logging.debug(n)
-
-    if level < np.min(ys):
-        return None
-
-    pt_left = [x[0], y[0]]  # the first point of the xs
-    pt_right = [x[-1], y[-1]]  # the last point of the xs
-
-    if level > pt_left[1]:  # left side is lower than level
-        x = [pt_left[0]] + x
-        y = [level] + y
-        n = [0] + n # assume n=0 for the added wall
-        p = [0] + p
-
-
-
-    if level < min(y):
-        # level below the XS
-        logging.warning('level is lower than the bottom of the xs')
-    else:
-        for i in range(len(x)):
-            logging.debug('processing point:%s' % i)
-            if i == 0:  # first point
-                pass
-            else:
-                # current point
-                x0 = x[i - 1]
-                y0 = y[i - 1]
-                n0 = n[i - 1]
-                p0 = p[i - 1]
-                logging.debug('process segment %s, %s' % (x0, y0))
-                logging.debug('%s,%s,%s,%s' % (x0, y0, n0, p0))
-                # previous point
-                x1 = x[i]
-                y1 = y[i]
-                n1 = n[i]
-                p1 = p[i]
-
-                if level == y0:
-                    line.append([x0, y0, n0])
-                    if p0 == 1:  # new marker
-                        panels.append(line)
-                        line = [[x0, y0, n0]]
-                elif y0 < level <= y1:  # xs going uphill, hitting the bank and line stops
-                    line.append([x0, y0, n0])
-                    logging.debug('uphill add %s, %s' % (x0, y0))
-                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
-                    if p0 == 1:  # new marker
-                        line.append([x0, y0, n0])
-                        line.append([x0, level, 0])
-                        panels.append(line)
-                        line = [[x0, level, 0], [x0, y0, n0]]
-                    line.append([pt[0], pt[1], n0])
-                    logging.debug('uphill intersection %s, %s' % (pt[0], pt[1]))
-                elif y1 <= level < y0:  # xs going downhill, leaving the bank line starts
-                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
-                    if p0 == 1:
-                        logging.debug('new panel')
-                        line.append([x0, level, 0])
-                        panels.append(line)
-                        line = [[x0, level, 0]]
-                    line.append([pt[0], pt[1], n0])
-                    logging.debug('downhill intersection %s, %s' % (pt[0], pt[1]))
-                elif level >= y1 and level >= y0:  # no intersection
-                    line.append([x0, y0, n0])
-                    logging.debug('both ends under level add %s, %s' % (x0, y0))
-                    if p0 == 1:
-                        logging.debug('new panel')
-                        line.append([x0, level, 0])
-                        panels.append(line)
-                        line = [[x0, level, 0], [x0, y0, n0]]
-    # check the last point
-    if level >= y1:
-        line.append([x1, y1, 0])
-        line.append([x1, level, 0])
-
-
-
-    panels.append(line)
-    results = []
-    for line in panels:
-        results.append(pd.DataFrame(line, columns=['offset', 'Z', 'roughness_N']))
-    return results
-
 
 def cut_xs(xs, ys, ns, level):
     """
@@ -592,9 +485,10 @@ def cut_xs(xs, ys, ns, level):
                 elif level >= y1 and level >= y0:  # no intersection
                     line.append([x0, y0, n0])
                     logging.debug('both ends under level add %s, %s' % (x0, y0))
-    # check the last point
-    if level >= y1:
-        line.append([x1, y1, n1])
+        # check the last point
+
+        if line and (level >= y1):
+            line.append([x1, y1, n1])
     return pd.DataFrame(line, columns=['offset', 'Z', 'roughness_N'])
 
 
@@ -659,25 +553,6 @@ def xs_to_panel(df):
         df_list.append(df)
     return pd.concat(df_list).reset_index()
 
-
-def xs_conveyance(df, depth):
-    panels = xs_to_panel(df)
-    rows = []
-    for panel_name in panels['panel_name'].unique():
-        data = panels.loc[panels['panel_name']==panel_name, ]
-        panel_type = data['type'].values[0]
-        p = panel_conveyance(data, depth, panel_type)
-
-        if p:
-            rows.append(p[:-1])
-            df_wet = p[-1]
-            df_wet['new_panel'] = 0
-            # fig = plot_xs(df_wet, '%s_%s (%s)' % (panel_name, depth, panel_type))
-            # fig.savefig(os.path.join(r'C:\Users\Mel.Meng\Documents\GitHub\SewerAnalysis\source\test\river\tmp', '%s_%s.png' % (panel_name, depth)))
-    # d, n_average, wp, width, area, k, df_we
-    df = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k'])
-    s = df.sum()
-    return depth, s['wp'], s['width'], s['area'], s['k']
 
 
 def panel_conveyance(df, depth, type):
@@ -764,4 +639,161 @@ def plot_conveyance(df, xs_name, fig=None):
     fig.suptitle(xs_name)
     plt.tight_layout()
     return fig
+
+
+
+def cut_xs_new(xs, ys, ns, ps, level):
+    """
+    given water level, cut the cross section with only lines touching the water
+    :param xs: list of offset
+    :param ys: list of z
+    :param ns: list of manning's n
+    :param ps: list of panel markers, 0 no, 1 yes
+    :param level: water level
+    :return: the wetted perimeter line, for lines that is under the ground, the n is set as 0, None if level is lower than the xs
+    """
+    # make a copy of all the lines
+    panels = []
+    line = []
+    x = list(xs)
+    y = list(ys)
+    p = list(ps) # panel markers
+    n = list(ns)
+
+    # no panel markers on start and end of the xs
+    p[0] = 0
+    p[-1] = 0
+
+    logging.debug(p)
+    logging.debug(n)
+
+    if level < np.min(ys):
+        return None
+
+    pt_left = [x[0], y[0]]  # the first point of the xs
+    pt_right = [x[-1], y[-1]]  # the last point of the xs
+
+    if level > pt_left[1]:  # left side is lower than level
+        x = [pt_left[0]] + x
+        y = [level] + y
+        n = [0] + n # assume n=0 for the added wall
+        p = [0] + p
+
+
+
+    if level < min(y):
+        # level below the XS
+        logging.warning('level is lower than the bottom of the xs')
+    else:
+        for i in range(len(x)):
+            logging.debug('processing point:%s' % i)
+            if i == 0:  # first point
+                pass
+            else:
+                # current point
+                x0 = x[i - 1]
+                y0 = y[i - 1]
+                n0 = n[i - 1]
+                p0 = p[i - 1]
+                logging.debug('process segment %s, %s' % (x0, y0))
+                logging.debug('%s,%s,%s,%s' % (x0, y0, n0, p0))
+                # previous point
+                x1 = x[i]
+                y1 = y[i]
+                n1 = n[i]
+                p1 = p[i]
+
+                if level == y0:
+
+                    if level <= y0: # uphill
+                        line.append([x0, y0, 0])
+                        if p0 == 1:  # new marker
+                            panels.append(line)
+                            line = [[x0, y0, 0]]
+                    else:
+                        line.append([x0, y0, n0])
+                        if p0 == 1:  # new marker
+                            panels.append(line)
+                            line = [[x0, y0, n0]]
+
+                elif y0 < level <= y1:  # xs going uphill, hitting the bank and line stops
+                    line.append([x0, y0, n0])
+                    logging.debug('uphill add %s, %s' % (x0, y0))
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    if p0 == 1:  # new marker
+                        line.append([x0, y0, n0])
+                        line.append([x0, level, 0])
+                        panels.append(line)
+                        line = [[x0, level, 0], [x0, y0, n], [pt[0], pt[1], 0]]
+                    line.append([pt[0], pt[1], 0])
+                    logging.debug('uphill intersection %s, %s' % (pt[0], pt[1]))
+                elif y1 <= level < y0:  # xs going downhill, leaving the bank line starts
+                    pt = line_intersection([[x0, y0], [x1, y1]], [[pt_left[0], level], [pt_right[0], level]])
+                    if p0 == 1:
+                        logging.debug('new panel')
+                        line.append([x0, level, 0])
+                        panels.append(line)
+                        line = [[x0, level, 0]]
+                    line.append([pt[0], pt[1], n0])
+                    logging.debug('downhill intersection %s, %s' % (pt[0], pt[1]))
+                elif level >= y1 and level >= y0:  # no intersection
+                    line.append([x0, y0, n0])
+                    logging.debug('both ends under level add %s, %s' % (x0, y0))
+                    if p0 == 1:
+                        logging.debug('new panel')
+                        line.append([x0, level, 0])
+                        panels.append(line)
+                        line = [[x0, level, 0], [x0, y0, n0]]
+    # check the last point
+    if level >= y1:
+        line.append([x1, y1, 0])
+        line.append([x1, level, 0])
+
+    panels.append(line)
+    results = []
+    for line in panels:
+        results.append(pd.DataFrame(line, columns=['offset', 'Z', 'roughness_N']))
+    return results
+
+def conveyance(df_wet, depth):
+    """
+    :param df: panel list of table
+    :param depth: water depth
+    :return: None if depth < xs, otherwise the results
+    """
+
+    if depth < np.min(df_wet['Z'].values):
+        return None
+
+    df_wet['length'] = df_wet.loc[:, ['offset', 'Z']].diff().apply(lambda x: np.sqrt(x['offset'] ** 2 + x['Z'] ** 2), axis=1).fillna(0)
+    df_segments = pd.DataFrame({'offset': df_wet['offset'].values[:-1],
+                                'n': df_wet['roughness_N'].values[:-1],
+                                'doffset':df_wet['offset'].diff().values[1:],
+                                'length': df_wet['length'].values[1:]})
+    df_n = df_segments.loc[df_segments['n'] > 0, ] # remove any segments that are not wet
+    n_average = np.sum(df_n['n'] * df_n['length']) / np.sum(df_n['length']) # average n
+    wp = np.sum(df_segments.loc[df_segments['n'] > 0, 'length'].values) # wetted perimeter
+    width = np.max(df_wet['offset']) - np.min(df_wet['offset']) - np.sum(df_segments.loc[df_segments['n'] == 0, 'doffset'].values) # water surface width
+    area = get_area(df_wet['offset'].values, df_wet['Z'].values)
+    k = 1.49/n_average*area*np.power(area/wp, 2/3.0)
+    d = depth - np.min(df_wet['Z'])
+    return [d, n_average, wp, width, area, k]
+
+def xs_conveyance_new(df, depth):
+    xs = df['offset'].values
+    ys = df['Z'].values
+    ns = df['roughness_N'].values
+    ps = df['new_panel'].values
+    lines = cut_xs_new(xs, ys, ns, ps, depth)
+    rows = []
+    for line in lines:
+        print(line)
+        p = conveyance(line, depth)
+        if p:
+            rows.append(p)
+
+    # d, n_average, wp, width, area, k, df_we
+    df = pd.DataFrame(rows, columns=['d', 'n_average', 'wp', 'width', 'area', 'k'])
+    s = df.sum()
+    return depth, s['wp'], s['width'], s['area'], s['k']
 
