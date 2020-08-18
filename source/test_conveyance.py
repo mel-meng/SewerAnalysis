@@ -45,6 +45,16 @@ def check_result(level, line, check, msg, show_plot=False):
 
 
 class Test(TestCase):
+    def setUp(self) -> None:
+        f = './test/river/cross_section.xlsx'
+        self.f = f
+
+
+    def test_get_length(self):
+        f = self.f
+        df = pd.read_excel(f, 'irregular')
+        p = conveyance.get_length(df['station'], df['z'])
+        assert (math.fabs(p - 53.17424804) < 0.01)
     def test_calculate_line_segment_go_up(self):
         tests = [
             [1.5, go_up, 'intersect go up', ([(0, 0), (1.5, 1.5)], [(0, 1.5), (1.5, 1.5)], 0.014, 1.125, 0)],
@@ -187,4 +197,9 @@ class Test(TestCase):
         plot_line(go_down, 'go_down')
         plot_line(vertical_up, 'vertical_up')
         plot_line(vertical_down, 'vertical_down')
+
+    def test_plot_conveyance_curve(self):
+        df = pd.read_csv('./test/river/conveyance_curve_test.csv')
+        conveyance.plot_conveyance_curve(df)
+        plt.show()
 

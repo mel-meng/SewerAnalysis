@@ -1,6 +1,8 @@
 import logging
 import numpy as np
 import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 
 def conveyance_at_level(xs, ys, ns, ps, level):
@@ -54,10 +56,11 @@ def conveyance_curve(xs, ys, ns, ps):
     for i, level in enumerate(level_list):
         results = conveyance_at_level(xs, ys, ns, ps, level)
         if i == 0:
-            if results is None:
+            if (results is None) or results.empty:
                 summary = {'level': level}
                 for v in ['k', 'wp', 'ws', 'area']:
                     summary[v] = 0
+                con_list.append(summary)
         else:
             if not results.empty:
 
@@ -188,3 +191,17 @@ def line_intersection(line1, line2):
     x = det(d, xdiff) / div
     y = det(d, ydiff) / div
     return x, y
+
+
+def plot_conveyance_curve(df, title='conveyance curve', xlabel='Conveyance', ylabel='Depth(ft)'):
+    sns.set()
+
+    df['dk'] = df['k'].diff()
+    df['dlevel'] = df['level'].diff()
+    df['dkdlevel'] = df['dk']/df['dlevel']
+    fig = plt.plot(df['dk'], df['level'], marker='o')
+    fig = plt.plot(df['dkdlevel'], df['level'], marker='o')
+    plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    return fig
